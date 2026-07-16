@@ -34,7 +34,11 @@ def allowed_file(filename):
 
 def generate_qr(filename):
     unique_id = str(uuid.uuid4())
-    report_url = f"http://127.0.0.1:5000/report/{unique_id}"
+    
+    # DYNAMIC FIX: Ensures the QR code points to your production URL on Render
+    domain = request.host_url.rstrip('/')
+    report_url = f"{domain}/report/{unique_id}"
+    
     img = qrcode.make(report_url)
     qr_path = os.path.join(app.config["QR_FOLDER"], f"{unique_id}.png")
     img.save(qr_path)
@@ -185,7 +189,6 @@ def home():
                 elif filename.lower().endswith(".docx"):
                     add_qr_to_docx(filepath, qr_path, output_report)
 
-                # Save paths across memory stores mapping to the unique UUID
                 REPORTS[report_id] = output_report
                 QR_CODES[report_id] = qr_path
                 
@@ -229,4 +232,6 @@ def open_qr(report_id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # DYNAMIC FIX: Allows production cloud systems to explicitly define network endpoints
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
